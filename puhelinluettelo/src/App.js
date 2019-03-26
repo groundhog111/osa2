@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from "react";
 import Filter from "./components/Filter";
-import PersonForm from "./components/PersonForm"
-import Persons from './components/Persons'
-import axios from 'axios'
+import PersonForm from "./components/PersonForm";
+import Persons from "./components/Persons";
+import personsService from "./services/personsService";
 
 const App = () => {
-  const [persons, setPersons] = useState([{ name: "Arto Hellas", number: "0401701440" }]);
+  const [persons, setPersons] = useState([
+    { name: "Arto Hellas", number: "0401701440" }
+  ]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [rajaus, setRajaus] = useState("");
   const [newRajaus, setNewRajaus] = useState("");
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/db')
-      .then(response => {
-        setPersons(response.data.persons)
-      })
-  }, [])
-  
+    personsService.getAll().then(response => {
+      setPersons(response.data);
+    });
+  }, []);
+
   const handleChangeName = event => {
     setNewName(event.target.value);
   };
@@ -29,21 +29,55 @@ const App = () => {
 
   const handleSubmitAdd = event => {
     event.preventDefault();
+    const objekti = { name: newName, number: newNumber.toString() };
+
     if (persons.map(person => person.name).includes(newName)) {
-      alert(`${newName} on jo luettelossa`);
+      if (
+        window.confirm(
+          `${newName} on jo luettelossa, korvataanko vanha numero uudella?`
+        )
+      ) {
+        let oikeaindeksi = persons
+          .map(person => person.name)
+          .indexOf(newName);
+        personsService
+          .update(objekti, oikeaindeksi + 1)
+          .then(response => console.log("response", response))
+          .then(
+            setPersons(
+              persons.map(person => {
+                if (person.name === objekti.name) return objekti;
+                return person;
+              })
+            )
+          );
+      }
       setNewName("");
       setNewNumber("");
       return;
     }
-    const objekti = { name: newName, number: newNumber.toString() };
-    setPersons(persons.concat(objekti));
-    setNewName("");
-    setNewNumber("");
+
+    personsService.create(objekti).then(response => {
+      setPersons(persons.concat(response.data));
+      setNewName("");
+      setNewNumber("");
+    });
   };
 
   const handleChangeRajaa = event => {
     setNewRajaus(event.target.value);
   };
+
+  const handleDelete = (id) => {
+    if(window.confirm(`Poistetaanko ${persons.find((person) => person.id === id).name}`)){
+      personsService.deleteUser(id)
+      .then((response) => {
+        if (response.status === 200) {
+          setPersons(persons.filter((person)=> person.id !== id))
+        }
+      })
+    }
+  }
 
   const handleSubmitRajaa = event => {
     event.preventDefault();
@@ -51,7 +85,6 @@ const App = () => {
     setNewRajaus("");
   };
 
-  
   //li elementiint wrappi ^^
   return (
     <div>
@@ -75,7 +108,7 @@ const App = () => {
 
       <h2>Numerot</h2>
 
-      <Persons rajaus={rajaus} persons={persons} />
+      <Persons rajaus={rajaus} persons={persons} handleDelete={handleDelete} />
     </div>
   );
 };

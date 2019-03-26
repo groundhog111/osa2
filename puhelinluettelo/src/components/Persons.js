@@ -1,7 +1,7 @@
 import React from 'react'
 import Person from './Person'
 
-const Persons = ({persons, rajaus}) => {  
+const Persons = ({persons, rajaus, handleDelete}) => {  
 
    const numbers = () => {
 
@@ -10,7 +10,7 @@ const Persons = ({persons, rajaus}) => {
      );
 
      return personsRender.map(person => (
-       <Person key={person.name} name={person.name} number={person.number} />
+       <Person key={person.name} id={person.id} name={person.name} number={person.number} handleDelete={handleDelete} />
      ));
      
    };
