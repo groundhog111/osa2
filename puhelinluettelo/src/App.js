@@ -3,6 +3,8 @@ import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
 import personsService from "./services/personsService";
+import Notification from "./components/Notification"
+import "./index.css";
 
 const App = () => {
   const [persons, setPersons] = useState([
@@ -12,6 +14,8 @@ const App = () => {
   const [newNumber, setNewNumber] = useState("");
   const [rajaus, setRajaus] = useState("");
   const [newRajaus, setNewRajaus] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null)
 
   useEffect(() => {
     personsService.getAll().then(response => {
@@ -49,7 +53,13 @@ const App = () => {
                 if (person.name === objekti.name) return objekti;
                 return person;
               })
-            )
+            ),
+            setSuccessMessage(
+              `${objekti.name}n puhelinnumero päivitetty`
+              ),
+            setTimeout(() => {
+                setSuccessMessage(null)
+              }, 3000)
           );
       }
       setNewName("");
@@ -59,6 +69,12 @@ const App = () => {
 
     personsService.create(objekti).then(response => {
       setPersons(persons.concat(response.data));
+      setSuccessMessage(
+        `henkilo '${newName}' lisätty puhelinluetteloon`
+        )
+      setTimeout(() => {
+          setSuccessMessage(null)
+        }, 3000)
       setNewName("");
       setNewNumber("");
     });
@@ -75,6 +91,20 @@ const App = () => {
         if (response.status === 200) {
           setPersons(persons.filter((person)=> person.id !== id))
         }
+          setSuccessMessage(
+            `${persons.find((person) => person.id === id).name} poistettu onnistuneesti`
+            )
+          setTimeout(() => {
+              setSuccessMessage(null)
+            }, 3000)
+      })
+      .catch(error => {
+        setErrorMessage(
+          `muistiinpano '${persons.find((person) => person.id === id).name}' on jo valitettavasti poistettu palvelimelta`
+          )
+        setTimeout(() => {
+            setSuccessMessage(null)
+          }, 3000)
       })
     }
   }
@@ -82,6 +112,12 @@ const App = () => {
   const handleSubmitRajaa = event => {
     event.preventDefault();
     setRajaus(newRajaus);
+    setSuccessMessage(
+      `henkilo '${newRajaus}' lisätty listalle`
+      )
+    setTimeout(() => {
+        setSuccessMessage(null)
+      }, 3000)
     setNewRajaus("");
   };
 
@@ -95,8 +131,12 @@ const App = () => {
         handleSubmitRajaa={handleSubmitRajaa}
         newRajaus={newRajaus}
       />
+      
+      <Notification message = {successMessage} className = "success" />
+      <Notification message = {errorMessage} className = "error"/>
 
       <h2>Lisää uusi numero</h2>
+
 
       <PersonForm
         handleChangeName={handleChangeName}
